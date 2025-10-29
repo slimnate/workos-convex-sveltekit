@@ -4,6 +4,7 @@ export default defineConfig({
   entry: {
     index: "src/index.ts",
     schema: "src/schema.ts",
+    cli: "src/cli.ts",
   },
   format: ["esm"],
   dts: true,
@@ -18,4 +19,5 @@ export default defineConfig({
   ],
   outDir: "dist",
   clean: true,
+  banner: { js: "#!/usr/bin/env node" },
 });

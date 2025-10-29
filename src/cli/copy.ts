@@ -1,6 +1,6 @@
 import type { CliOptions } from './args';
 import fg from 'fast-glob';
-import fs from 'fs-extra';
+import * as fs from 'fs-extra';
 import path from 'node:path';
 import { logInfo, logWarn, logSuccess, logError } from './log';
 import { promptConflict } from './prompts';

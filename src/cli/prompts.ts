@@ -1,5 +1,5 @@
 import readline from 'node:readline';
-import fs from 'fs-extra';
+import * as fs from 'fs-extra';
 import pc from 'picocolors';
 import { createTwoFilesPatch } from 'diff';
 

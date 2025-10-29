@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import fs from 'fs-extra';
+import * as fs from 'fs-extra';
 
 export function resolvePaths(destRoot: string) {
   // dist/cli.js sits in dist/; templates/ is at ../templates relative to dist/cli.js

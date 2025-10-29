@@ -10,6 +10,9 @@
     "dist",
     "templates"
   ],
+  "bin": {
+    "workos-convex-sveltekit": "dist/cli.js"
+  },
   "exports": {
     ".": {
       "default": "./dist/index.js"
@@ -43,6 +46,8 @@
   },
   "homepage": "https://github.com/slimnate/workos-convex-sveltekit#readme",
   "devDependencies": {
+    "@types/diff": "^7.0.2",
+    "@types/fs-extra": "^11.0.4",
     "@types/node": "^24.9.1",
     "convex": "^1.28.0",
     "tsup": "^8.5.0",
@@ -51,6 +56,10 @@
   "dependencies": {
     "@sveltejs/kit": "^2.48.0",
     "@workos/authkit-sveltekit": "^0.0.1-alpha.0",
-    "convex-svelte": "^0.0.11"
+    "convex-svelte": "^0.0.11",
+    "diff": "^5.2.0",
+    "fast-glob": "^3.3.2",
+    "fs-extra": "^11.2.0",
+    "picocolors": "^1.0.0"
   }
 }
