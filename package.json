@@ -1,0 +1,56 @@
+{
+  "name": "workos-convex-sveltekit",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "version": "1.0.0",
+  "description": "WorkOS + Convex authentication for SvelteKit",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "exports": {
+    ".": {
+      "default": "./dist/index.js"
+    },
+    "./schema": {
+      "default": "./dist/schema.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf dist",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slimnate/workos-convex-sveltekit.git"
+  },
+  "keywords": [
+    "workos",
+    "authkit",
+    "auth",
+    "convex",
+    "convexdb",
+    "svelte",
+    "sveltekit"
+  ],
+  "author": "slimnate <slimnatekc@gmail.com> (https:/slimnate.net/)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/slimnate/workos-convex-sveltekit/issues"
+  },
+  "homepage": "https://github.com/slimnate/workos-convex-sveltekit#readme",
+  "devDependencies": {
+    "@types/node": "^24.9.1",
+    "convex": "^1.28.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@sveltejs/kit": "^2.48.0",
+    "@workos/authkit-sveltekit": "^0.0.1-alpha.0",
+    "convex-svelte": "^0.0.11"
+  }
+}
