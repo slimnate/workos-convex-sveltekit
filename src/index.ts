@@ -123,19 +123,6 @@ function handleSignOut() {
   };
 }
 
-// Optional user table shape helper for host schemas
-const userTable = {
-  email: v.string(),
-  name: v.optional(v.string()),
-  firstName: v.optional(v.string()),
-  lastName: v.optional(v.string()),
-  profilePictureUrl: v.optional(v.string()),
-  workosUserId: v.string(),
-  createdAt: v.number(),
-  updatedAt: v.number(),
-  lastSignInAt: v.optional(v.number()),
-};
-
 // Alias for authKit.handleCallback. Use in /api/auth/callback
 const handleAuthCallback = authKit.handleCallback;
 
@@ -148,7 +135,6 @@ export {
   authKitHandle,
   authKit,
   handleAuthCallback,
-  userTable,
   // Client utilities
   configureClientAuth,
   useConvexClient,
