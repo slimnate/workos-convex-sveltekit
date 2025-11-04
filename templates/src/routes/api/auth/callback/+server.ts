@@ -1,3 +1,3 @@
-import { handleAuthCallback } from 'workos-convex-sveltekit';
+import { authKit } from '@workos/authkit-sveltekit';
 
-export const GET = handleAuthCallback();
+export const GET = authKit.handleCallback();

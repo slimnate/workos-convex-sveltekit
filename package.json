@@ -54,12 +54,14 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@sveltejs/kit": "^2.48.0",
-    "@workos/authkit-sveltekit": "^0.0.1-alpha.0",
-    "convex-svelte": "^0.0.11",
     "diff": "^5.2.0",
     "fast-glob": "^3.3.2",
     "fs-extra": "^11.2.0",
     "picocolors": "^1.0.0"
+  },
+  "peerDependencies": {
+    "@sveltejs/kit": "^2.48.0",
+    "@workos/authkit-sveltekit": "^0.0.1-alpha.0",
+    "convex-svelte": "^0.0.11"
   }
 }
