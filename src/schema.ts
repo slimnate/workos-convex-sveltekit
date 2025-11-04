@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { defineTable, TableDefinition } from "convex/server";
 
-const userFields = {
+const usersFields = {
   email: v.string(),
   name: v.optional(v.string()),
   firstName: v.optional(v.string()),
@@ -19,7 +19,7 @@ const userFields = {
 /**
  * A reusable users table definition that host apps can include into their schema
  */
-const userTable = applyIndicies(defineTable(userFields));
+const usersTable = applyIndicies(defineTable(usersFields));
 
 /**
  * Extend the users table with additional fields
@@ -28,7 +28,7 @@ const userTable = applyIndicies(defineTable(userFields));
  */
 function extendUsers(additionalFields: Record<string, any>) {
   return applyIndicies(defineTable({
-    ...userFields,
+    ...usersFields,
     ...additionalFields,
   }));
 }
@@ -39,4 +39,4 @@ function applyIndicies(table: TableDefinition) {
     .index("by_organization", ["organizationId"]);
 }
 
-export { userTable, extendUsers };
+export { usersTable, extendUsers };

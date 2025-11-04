@@ -1,9 +1,9 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { userTable } from "workos-convex-sveltekit/schema";
+import { usersTable } from "workos-convex-sveltekit/schema";
 
 export default defineSchema({
-  users: userTable,
+  users: usersTable,
 
   public_data: defineTable({
     text: v.string(),
