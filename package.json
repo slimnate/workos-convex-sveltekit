@@ -19,9 +19,6 @@
     },
     "./schema": {
       "default": "./dist/schema.js"
-    },
-    "./users": {
-      "default": "./dist/users.js"
     }
   },
   "scripts": {
