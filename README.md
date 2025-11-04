@@ -164,6 +164,7 @@ import { ConvexHttpClient } from "convex/browser";
 export const actions = {
     privateAction: authenticatedRequest(authKit, async ({auth, request}) => {
         const convex = new ConvexHttpClient(PUBLIC_CONVEX_URL);
+        convex.setAuth(auth.accessToken as string);
 
         const result = await convex.query(api.users.getAllUsers, { });
 
