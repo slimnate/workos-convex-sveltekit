@@ -1,8 +1,7 @@
 import { v } from "convex/values";
-import { defineTable } from "convex/server";
+import { defineTable, TableDefinition } from "convex/server";
 
-// A reusable users table definition that host apps can spread into their schema
-const userTable = defineTable({
+const userFields = {
   email: v.string(),
   name: v.optional(v.string()),
   firstName: v.optional(v.string()),
@@ -15,9 +14,29 @@ const userTable = defineTable({
   updatedAt: v.number(),
   lastSignInAt: v.optional(v.number()),
   profilePictureUrl: v.optional(v.string()),
-})
-  .index("by_email", ["email"])
-  .index("by_workos_user_id", ["workosUserId"])
-  .index("by_organization", ["organizationId"])
+};
 
-export { userTable }
+/**
+ * A reusable users table definition that host apps can include into their schema
+ */
+const userTable = applyIndicies(defineTable(userFields));
+
+/**
+ * Extend the users table with additional fields
+ * @param additionalFields - The additional fields to add to the users table
+ * @returns The extended users table
+ */
+function extendUsers(additionalFields: Record<string, any>) {
+  return applyIndicies(defineTable({
+    ...userFields,
+    ...additionalFields,
+  }));
+}
+
+function applyIndicies(table: TableDefinition) {
+  return table.index("by_email", ["email"])
+    .index("by_workos_user_id", ["workosUserId"])
+    .index("by_organization", ["organizationId"]);
+}
+
+export { userTable, extendUsers };
