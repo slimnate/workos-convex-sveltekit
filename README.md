@@ -84,22 +84,22 @@ See [CLI Options](#cli-options) for more details about the CLI tool.
 Once you have all the [Configuration](#configure-project) steps completed, you're ready to start using the library.
 
 ## Authenticating server routes
-You can authenticate a server route using the `authenticatedRequest` function:
+You can authenticate a server route using the `authenticatedRequest` function in any `+layout.server.ts` file:
 
 ```ts
-import { authenticatedRequest, useConvexClient } from "workos-convex-sveltekit";
-import { authKit } from "@workos/authkit-sveltekit";
-import { api } from "../../convex/_generated/api.js";
+import type { LayoutServerLoad } from './$types';
+import { authenticatedRequest } from 'workos-convex-sveltekit';
+import { authKit } from '@workos/authkit-sveltekit';
 
-export const actions = {
-    privateAction: authenticatedRequest(authKit, async ({auth, request}) => {
-        const convex = useConvexClient();
-        const data = await convex.query(api.users.testUserFunction, { testParam: 'testing user function' });
-        return {
-            data
-        }
-    })
-}
+export const load: LayoutServerLoad = authenticatedRequest(authKit, async ({ auth, url, locals }) => {
+	const user = auth.user;
+
+    //User is authenticated here
+
+	return {
+		user: user
+	};
+});
 ```
 
 ## Using queries in pages
