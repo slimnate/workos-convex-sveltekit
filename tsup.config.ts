@@ -4,6 +4,7 @@ export default defineConfig({
   entry: {
     index: "src/index.ts",
     schema: "src/schema.ts",
+    users: "src/users.ts",
     cli: "src/cli.ts",
   },
   format: ["esm"],
