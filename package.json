@@ -5,7 +5,6 @@
   "types": "dist/index.d.ts",
   "version": "1.0.0",
   "description": "WorkOS + Convex authentication for SvelteKit",
-  "sideEffects": false,
   "files": [
     "dist",
     "templates"
@@ -39,7 +38,7 @@
     "svelte",
     "sveltekit"
   ],
-  "author": "slimnate <slimnatekc@gmail.com> (https:/slimnate.net/)",
+  "author": "Nathan Hoyt <slimnatekc@gmail.com> (https:/slimnate.net/)",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/slimnate/workos-convex-sveltekit/issues"
