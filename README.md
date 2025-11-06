@@ -61,16 +61,17 @@ WORKOS_COOKIE_PASSWORD=<cookie_password>
 
 The library provides a CLI that automatically copies necessary files to your project. These files provide all the boilerplate needed for a basic Convex + WorkOS SvelteKit auth integration. If you are implementing into an existing project, you may need to manually merge the files.
 
-- `convex/auth.config.ts`: Default authentication configuration for convex. Copied directly from the Convex Documentation
-- `convex/users.ts` - Convex user query functions
-- `convex/schema.ts` - Convex schema file
-- `routes/api/auth/callback/+server.ts` - Handles the auth callback 
-- `routes/api/auth/logout/+server.ts` - Handles logging the user out
-- `routes/api/auth/token/+server.ts` - Returns a JWT token for the currently authenticated user
-- `routes/+layout.svelte` - Base layout file that configures auth on the client
-- `routes/admin/+layout.server.ts` - Example of how to use the authenticatedRoute to protect a specific route
-- `hooks.server.ts` - SvelteKit server hooks to handle configuring auth
-- `app.d.ts` -  Extended global types for SvelteKit
+- `src/convex/auth.config.ts`: Default authentication configuration for convex. Copied directly from the Convex Documentation
+- `src/convex/users.ts` - Convex user query functions
+- `src/convex/schema.ts` - Convex schema file
+- `src/routes/api/auth/callback/+server.ts` - Handles the auth callback 
+- `src/routes/api/auth/logout/+server.ts` - Handles logging the user out
+- `src/routes/api/auth/token/+server.ts` - Returns a JWT token for the currently authenticated user
+- `src/routes/+layout.svelte` - Base layout file that configures auth on the client
+- `src/routes/admin/+layout.server.ts` - Example of how to use the authenticatedRoute to protect a specific route
+- `src/hooks.server.ts` - SvelteKit server hooks to handle configuring auth
+- `src/app.d.ts` -  Extended global types for SvelteKit
+- `convex.json` -  Configure the convex directory to be inside `src`
 
 You can inspect and modify these files as needed after copying. All files preserve your existing code if conflicts are found - interactive diff and prompt are shown before any overwrite.
 
@@ -79,6 +80,9 @@ npx workos-convex-sveltekit copy
 ```
 
 See [CLI Options](#cli-options) for more details about the CLI tool.
+
+## Optional configurations
+TODO: This section will outline some additional configurations that can be made in the WorkOS UI, and how to integrate them with this library.
 
 # Usage
 Once you have all the [Configuration](#configure-project) steps completed, you're ready to start using the library.
@@ -173,7 +177,12 @@ export const actions = {
 };
 ```
 
+## Best Practices
+These are some best practices that I have come up with
+- Authorization inside your convex query/mutation functions. Limit client side trust as much as possible.
 
+# Deployment
+When deploying besure to include all the WorkOS environment variables for the build.
 
 # CLI Options
 The `workos-convex-sveltekit` CLI provides several options to control how files are copied and how conflicts are handled. These can be combined as needed.
@@ -247,7 +256,7 @@ npm run clean
 npm run build && npm link
 
 # In your consuming app
-npm link workos-convex-sveltekit
+npm link --save workos-convex-sveltekit
 workos-convex-sveltekit copy --dry-run --verbose
 ```
 
