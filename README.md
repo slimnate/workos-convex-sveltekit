@@ -56,6 +56,7 @@ WORKOS_COOKIE_PASSWORD=<cookie_password>
 ```
 
 > **NOTE** To generate a secure cookie password use: `openssl rand -base64 24`
+> **NOTE** Remember to add .env.local to your .gitignore
 
 ## Copy template files
 
@@ -80,6 +81,9 @@ npx workos-convex-sveltekit copy
 ```
 
 See [CLI Options](#cli-options) for more details about the CLI tool.
+
+## Configure convex deployment
+You'll need to create a new convex deployment and configure it. Run the `npx convex dev` command and follow the prompts to either create or use and existing project. Then follow the steps to configure the `WORKOS_CLIENT_ID` in the convex dashboard.
 
 ## Optional configurations
 TODO: This section will outline some additional configurations that can be made in the WorkOS UI, and how to integrate them with this library.
