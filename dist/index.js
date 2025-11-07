@@ -1,8 +1,8 @@
-#!/usr/bin/env node
 import { redirect, json } from '@sveltejs/kit';
 import { ConvexHttpClient } from 'convex/browser';
 import { setupConvex, useConvexClient } from 'convex-svelte';
 
+// src/index.ts
 var authConfig;
 function authenticatedRequest(authKitInstance, handler) {
   return authKitInstance.withAuth(async (event) => {
@@ -33,7 +33,7 @@ function authenticatedRequest(authKitInstance, handler) {
     return handler(event);
   });
 }
-function configureServerAuth(config, authKitInstance, configureAuthKit) {
+function configureServerAuth(config, configureAuthKit) {
   authConfig = config;
   debug("configureServerAuth", "called");
   if (!authConfig) {

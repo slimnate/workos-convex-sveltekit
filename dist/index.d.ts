@@ -1,5 +1,5 @@
 import { FunctionReference } from 'convex/server';
-import { AuthKitAuth, authKit, configureAuthKit } from '@workos/authkit-sveltekit';
+import { AuthKitAuth, configureAuthKit, authKit } from '@workos/authkit-sveltekit';
 import { RequestEvent } from '@sveltejs/kit';
 
 /**
@@ -57,7 +57,7 @@ declare function authenticatedRequest<T>(authKitInstance: typeof authKit, handle
 /**
  * Configure server authentication. Use this in hooks.server.ts
  */
-declare function configureServerAuth(config: AuthConfig, authKitInstance: typeof authKit, configureAuthKit: typeof configureAuthKit): void;
+declare function configureServerAuth(config: AuthConfig, configureAuthKit: typeof configureAuthKit): void;
 /**
  * Configure client authentication. Use this in +layout.svelte
  */

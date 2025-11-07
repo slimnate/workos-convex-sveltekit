@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { fileURLToPath } from 'url';
 import path2 from 'path';
 import * as fs from 'fs';
