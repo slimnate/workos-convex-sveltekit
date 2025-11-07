@@ -1,6 +1,5 @@
 import { redirect, json } from '@sveltejs/kit';
 import { ConvexHttpClient } from 'convex/browser';
-import { setupConvex, useConvexClient } from 'convex-svelte';
 
 // src/index.ts
 var authConfig;
@@ -52,7 +51,7 @@ function configureServerAuth(config, configureAuthKit) {
     cookiePassword: config.workos.cookiePassword
   });
 }
-function configureClientAuth(browser, convexUrl) {
+function configureClientAuth(setupConvex, useConvexClient, browser, convexUrl) {
   debug("configureClientAuth", `browser=${browser} convexUrl=${convexUrl}`);
   if (!convexUrl) {
     throw new Error("ConvexUrl must be provided to client auth configuration.");

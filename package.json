@@ -61,8 +61,7 @@
     "fast-glob": "^3.3.2",
     "fs-extra": "^11.2.0",
     "picocolors": "^1.0.0",
-    "convex": "^1.28.0",
-    "convex-svelte": "^0.0.12"
+    "convex": "^1.28.0"
   },
   "peerDependencies": {
     "@sveltejs/kit": "^2.48.0",

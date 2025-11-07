@@ -9,7 +9,7 @@ export default defineConfig({
 	dts: true,
 	sourcemap: true,
 	treeshake: true,
-	external: ['svelte', 'convex', 'convex-svelte', '@workos/authkit-sveltekit', '@sveltejs/kit'],
+	external: ['svelte', 'convex', '@workos/authkit-sveltekit', '@sveltejs/kit'],
 	outDir: 'dist',
 	clean: true
 });

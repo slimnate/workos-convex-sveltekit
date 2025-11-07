@@ -7,7 +7,6 @@ import {
 
 import { redirect, json } from '@sveltejs/kit';
 import { ConvexHttpClient } from 'convex/browser';
-import { setupConvex, useConvexClient, useQuery } from 'convex-svelte';
 
 // Globally scoped auth configuration
 let authConfig: AuthConfig | undefined;
@@ -79,7 +78,12 @@ function configureServerAuth(config: AuthConfig, configureAuthKit: typeof Config
 /**
  * Configure client authentication. Use this in +layout.svelte
  */
-function configureClientAuth(browser: boolean, convexUrl: string) {
+function configureClientAuth(
+	setupConvex: Function,
+	useConvexClient: Function,
+	browser: boolean,
+	convexUrl: string
+) {
 	debug('configureClientAuth', `browser=${browser} convexUrl=${convexUrl}`);
 	if (!convexUrl) {
 		throw new Error('ConvexUrl must be provided to client auth configuration.');

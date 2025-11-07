@@ -61,7 +61,7 @@ declare function configureServerAuth(config: AuthConfig, configureAuthKit: typeo
 /**
  * Configure client authentication. Use this in +layout.svelte
  */
-declare function configureClientAuth(browser: boolean, convexUrl: string): void;
+declare function configureClientAuth(setupConvex: Function, useConvexClient: Function, browser: boolean, convexUrl: string): void;
 /**
  * Token endpoint handler for /api/auth/token
  */
