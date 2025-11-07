@@ -1,7 +1,6 @@
 import { FunctionReference } from 'convex/server';
 import { AuthKitAuth, authKit, configureAuthKit } from '@workos/authkit-sveltekit';
 import { RequestEvent } from '@sveltejs/kit';
-export { useConvexClient, useQuery } from 'convex-svelte';
 
 /**
  * Core types for WorkOS + Convex authentication

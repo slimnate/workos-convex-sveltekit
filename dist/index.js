@@ -2,7 +2,6 @@
 import { redirect, json } from '@sveltejs/kit';
 import { ConvexHttpClient } from 'convex/browser';
 import { setupConvex, useConvexClient } from 'convex-svelte';
-export { useConvexClient, useQuery } from 'convex-svelte';
 
 var authConfig;
 function authenticatedRequest(authKitInstance, handler) {
@@ -87,7 +86,10 @@ function configureClientAuth(browser, convexUrl) {
 function handleToken(authKitInstance) {
   debug("handleToken", "called");
   return authKitInstance.withAuth(async ({ auth }) => {
-    debug("handleToken", `auth present user=${Boolean(auth.user)} token=${Boolean(auth.accessToken)}`);
+    debug(
+      "handleToken",
+      `auth present user=${Boolean(auth.user)} token=${Boolean(auth.accessToken)}`
+    );
     if (!auth.user || !auth.accessToken) {
       return redirect(302, "/api/auth/login");
     }
@@ -98,7 +100,10 @@ function handleToken(authKitInstance) {
 function handleSignOut(authKitInstance) {
   debug("handleSignOut", "called");
   return authKitInstance.withAuth(async (event) => {
-    debug("handleSignOut", `auth present user=${Boolean(event.auth.user)} token=${Boolean(event.auth.accessToken)}`);
+    debug(
+      "handleSignOut",
+      `auth present user=${Boolean(event.auth.user)} token=${Boolean(event.auth.accessToken)}`
+    );
     if (!event.auth.user || !event.auth.accessToken) {
       return redirect(302, "/api/auth/login");
     }
