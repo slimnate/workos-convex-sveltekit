@@ -19,8 +19,7 @@ configureServerAuth(
 		convexUrl: PUBLIC_CONVEX_URL as string,
 		api: api
 	},
-	authKit,
-	configureAuthKit
+	authKit
 );
 
 export const handle = authKitHandle();

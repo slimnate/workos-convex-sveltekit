@@ -54,11 +54,7 @@ function authenticatedRequest<T>(authKitInstance: typeof AuthKit, handler: Custo
 /**
  * Configure server authentication. Use this in hooks.server.ts
  */
-function configureServerAuth(
-	config: AuthConfig,
-	authKitInstance: typeof AuthKit,
-	configureAuthKit: typeof ConfigureAuthKit
-) {
+function configureServerAuth(config: AuthConfig, configureAuthKit: typeof ConfigureAuthKit) {
 	authConfig = config;
 
 	debug('configureServerAuth', 'called');
