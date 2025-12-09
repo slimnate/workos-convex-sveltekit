@@ -53,6 +53,9 @@ WORKOS_CLIENT_ID=<client_id>
 WORKOS_API_KEY=<api_key>
 WORKOS_REDIRECT_URI=http://localhost:5173/api/auth/callback
 WORKOS_COOKIE_PASSWORD=<cookie_password>
+#
+# Convex (public) URL
+PUBLIC_CONVEX_URL=<public_convex_url>
 ```
 
 > **NOTE** To generate a secure cookie password use: `openssl rand -base64 24`
@@ -85,11 +88,65 @@ See [CLI Options](#cli-options) for more details about the CLI tool.
 ## Configure convex deployment
 You'll need to create a new convex deployment and configure it. Run the `npx convex dev` command and follow the prompts to either create or use and existing project. Then follow the steps to configure the `WORKOS_CLIENT_ID` in the convex dashboard.
 
+> On successful authentication, the library uses ConvexHttpClient and calls `api.users.store` to upsert the current user in your `users` table. Existing `roles` are preserved; new users start with `roles: []`.
+
 ## Optional configurations
 TODO: This section will outline some additional configurations that can be made in the WorkOS UI, and how to integrate them with this library.
 
 # Usage
 Once you have all the [Configuration](#configure-project) steps completed, you're ready to start using the library.
+
+## Schema helpers usage
+```ts
+// src/convex/schema.ts
+import { defineSchema } from 'convex/server';
+import { v } from 'convex/values';
+import { defaultUsers, extendUsers } from 'workos-convex-sveltekit/schema';
+
+export default defineSchema({
+  users: defaultUsers(v)
+});
+
+// Or extend with custom fields (+ you can chain your own indexes)
+// users: extendUsers(v, { extraField: v.string() })
+//   .index('by_extra_field', ['extraField'])
+```
+Notes:
+- The helpers already apply indexes `by_email` and `by_workos_user_id`.
+- No generics are required.
+
+## Library exports
+```ts
+// Server utilities
+import {
+  configureServerAuth,
+  authenticatedRequest,
+  handleToken,
+  handleSignOut,
+  handleSignIn,
+} from 'workos-convex-sveltekit';
+
+// Client utility
+import { configureClientAuth } from 'workos-convex-sveltekit';
+
+// Schema helpers
+import { defaultUsers, extendUsers } from 'workos-convex-sveltekit/schema';
+```
+
+## Client setup (+layout.svelte)
+```svelte
+<script lang="ts">
+  import { browser } from '$app/environment';
+  import { setupConvex, useConvexClient } from 'convex-svelte';
+  import { configureClientAuth } from 'workos-convex-sveltekit';
+  import { PUBLIC_CONVEX_URL } from '$env/static/public';
+
+  configureClientAuth(setupConvex, useConvexClient, browser, PUBLIC_CONVEX_URL as string);
+  let { children } = $props();
+</script>
+
+{@render children?.()}
+```
 
 ## Authenticating server routes
 You can authenticate a server route using the `authenticatedRequest` function in any `+layout.server.ts` file:
@@ -110,8 +167,29 @@ export const load: LayoutServerLoad = authenticatedRequest(authKit, async ({ aut
 });
 ```
 
+## Auth routes provided by the template
+- `GET /api/auth/callback` (WorkOS callback)
+- `GET /api/auth/token` (returns JWT via `handleToken`)
+- `GET /api/auth/logout` (signs out via `handleSignOut`)
+- `GET /api/auth/signin` (optional; via `handleSignIn`)
+
+### Optional: Sign‑in route
+```ts
+// src/routes/api/auth/signin/+server.ts
+import { authKit } from '@workos/authkit-sveltekit';
+import { handleSignIn } from 'workos-convex-sveltekit';
+
+export const GET = handleSignIn(authKit);
+```
+
 ## Using queries in pages
-In any `+page.svelte`, you can access the `useQuery()` or `convex.mutation()` functions in your svelte app:
+In any `+page.svelte`, you can access the `useQuery()` or `convex.mutation()` functions in your svelte app. The template provides user queries in `src/convex/users.ts`:
+ - `store` (mutation): upserts the current user on sign-in; preserves existing `roles`; initializes `roles: []` for new users; updates `lastSignInAt` and timestamps.
+ - `getCurrentUser` (query): returns the current authenticated user or `null`.
+ - `getUserById` (query): looks up a user by `workosUserId`.
+ - `getUserByEmail` (query): looks up a user by email.
+ - `getAllUsers` (query): returns all users.
+ - `hasRole` (query): returns `true/false` if the current user has the provided role.
 ```svelte
 <script lang="ts">
 	import { useQuery, useConvexClient } from 'convex-svelte';
@@ -160,6 +238,16 @@ In any `+page.svelte`, you can access the `useQuery()` or `convex.mutation()` fu
 </div>
 ```
 
+### Role check example
+```svelte
+<script lang="ts">
+  import { useQuery } from 'convex-svelte';
+  import { api } from '../convex/_generated/api';
+
+  const isAdmin = useQuery(api.users.hasRole, { role: 'admin' });
+</script>
+```
+
 ## Server actions
 You can also use SvelteKits server actions
 ```ts
@@ -203,7 +291,9 @@ The `workos-convex-sveltekit` CLI provides several options to control how files 
 
 ### Example
 ```bash
-npx workos-convex-sveltekit copy --dest ./src --dry-run --verbose
+npx workos-convex-sveltekit copy --dry-run --verbose
+# or explicitly target the project root
+npx workos-convex-sveltekit copy --dest . --dry-run --verbose
 ```
 - This will show a summary of all file actions that would be taken, writing nothing.
 ### Conflict Handling

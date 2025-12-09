@@ -32,12 +32,15 @@ export const store = mutation({
 		};
 
 		if (existingUser !== null) {
+			// Preserve roles array when updating
 			await ctx.db.patch(existingUser._id, userData);
 			return existingUser._id;
 		}
 
+		// New users have no roles by default (empty array)
 		return await ctx.db.insert('users', {
 			...userData,
+			roles: [], // New users start with no roles
 			createdAt: now
 		});
 	}
@@ -88,5 +91,27 @@ export const getAllUsers = query({
 	args: {},
 	handler: async (ctx) => {
 		return await ctx.db.query('users').collect();
+	}
+});
+
+/**
+ * Check if current user has a specific role
+ */
+export const hasRole = query({
+	args: {
+		role: v.string()
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			return false;
+		}
+
+		const user = await ctx.db
+			.query('users')
+			.withIndex('by_workos_user_id', (q) => q.eq('workosUserId', identity.subject))
+			.unique();
+
+		return user?.roles?.includes(args.role) ?? false;
 	}
 });
