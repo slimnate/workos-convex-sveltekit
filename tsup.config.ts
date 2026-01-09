@@ -10,7 +10,17 @@ export default defineConfig({
 	dts: true,
 	sourcemap: true,
 	treeshake: true,
-	external: ['svelte', 'convex', '@workos/authkit-sveltekit', '@sveltejs/kit'],
+	platform: 'node',
+	external: [
+		'svelte',
+		'convex',
+		'@workos/authkit-sveltekit',
+		'@sveltejs/kit',
+		'fs-extra',
+		'fast-glob',
+		'picocolors',
+		'diff'
+	],
 	outDir: 'dist',
 	clean: true
 });

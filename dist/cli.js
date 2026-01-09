@@ -3,7 +3,7 @@ import { fileURLToPath } from 'url';
 import path2 from 'path';
 import * as fs from 'fs';
 import fg from 'fast-glob';
-import * as fs3 from 'fs-extra';
+import fs3 from 'fs-extra';
 import pc2 from 'picocolors';
 import readline from 'readline';
 import fs2 from 'fs/promises';
@@ -17,6 +17,7 @@ function parseArgs(argv) {
     yes: false,
     dryRun: false,
     backup: false,
+    merge: false,
     verbose: false,
     help: false,
     version: false
@@ -52,6 +53,10 @@ function parseArgs(argv) {
       opts.backup = true;
       continue;
     }
+    if (arg === "--merge") {
+      opts.merge = true;
+      continue;
+    }
     if (arg === "--verbose" || arg === "-v") {
       opts.verbose = true;
       continue;
@@ -77,6 +82,7 @@ function formatHelp() {
     "  --yes, -y         Assume yes to all prompts (non-interactive)",
     "  --dry-run         Print planned actions without writing files",
     "  --backup          Backup existing files before overwrite",
+    "  --merge           Merge changes with Git-style conflict markers (for code files)",
     "  --verbose, -v     Verbose logging",
     "  --help, -h        Show this help message",
     "  --version, -V     Show version"
@@ -99,17 +105,17 @@ function logWarn(msg) {
 function logSuccess(msg) {
   console.log(pc2.green(String(msg)));
 }
-function logError(err2) {
-  console.error(pc2.red(String(err2)));
+function logError(err) {
+  console.error(pc2.red(String(err)));
 }
 async function promptConflict(relPath, srcPath, destPath) {
   try {
-    const oldText = await fs2.readFile(destPath, "utf8").catch(() => {
+    const oldText = await fs2.readFile(destPath, "utf8").catch((err) => {
       console.error(`Failed to read existing file ${destPath}:`, err);
       return "";
     });
-    const newText = await fs2.readFile(srcPath, "utf8").catch((err2) => {
-      console.error(`Failed to read template file ${srcPath}:`, err2);
+    const newText = await fs2.readFile(srcPath, "utf8").catch((err) => {
+      console.error(`Failed to read template file ${srcPath}:`, err);
       return "";
     });
     const oldNorm = oldText.replace(/\r\n/g, "\n");
@@ -137,22 +143,24 @@ async function promptConflict(relPath, srcPath, destPath) {
         console.log(line);
       }
     }
-  } catch (err2) {
-    console.error(`Failed to generate unified diff for ${relPath}:`, err2);
+  } catch (err) {
+    console.error(`Failed to generate unified diff for ${relPath}:`, err);
   }
   await new Promise((resolve) => setTimeout(resolve, 0));
   const question = `Conflict: ${relPath}
-Choose: [o]verwrite, [s]kip, [b]ackup, overwrite [a]ll, skip [A]ll: `;
+Choose: [o]verwrite, [s]kip, [b]ackup, [m]erge, overwrite [a]ll, skip [A]ll, merge [M] all: `;
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   try {
     const answer = await new Promise((resolve) => rl.question(question, resolve));
     const raw = (answer || "").trim();
     const a = raw.toLowerCase();
     if (raw === "A" || a === "all" || a === "skip all" || a === "skipall") return "skipAll";
+    if (raw === "M" || a === "merge all" || a === "mergeall") return "mergeAll";
+    if (a === "a" || a === "overwrite all" || a === "overwriteall") return "overwriteAll";
     if (a === "o" || a === "overwrite") return "overwrite";
     if (a === "s" || a === "skip") return "skip";
     if (a === "b" || a === "backup") return "backup";
-    if (a === "a" || a === "overwrite all" || a === "overwriteall") return "overwriteAll";
+    if (a === "m" || a === "merge") return "merge";
     return "skip";
   } finally {
     rl.close();
@@ -160,10 +168,55 @@ Choose: [o]verwrite, [s]kip, [b]ackup, overwrite [a]ll, skip [A]ll: `;
 }
 
 // src/cli/copy.ts
-async function copyTemplates({ opts, paths }) {
+async function mergeFiles(srcPath, destPath, relPath, opts) {
+  const ext = path2.extname(relPath).toLowerCase();
+  const codeExtensions = [
+    ".js",
+    ".ts",
+    ".jsx",
+    ".tsx",
+    ".svelte",
+    ".vue",
+    ".css",
+    ".scss",
+    ".html",
+    ".json"
+  ];
+  if (!codeExtensions.includes(ext)) {
+    return fs3.readFile(srcPath, "utf8");
+  }
+  try {
+    const [srcText, destText] = await Promise.all([
+      fs3.readFile(srcPath, "utf8"),
+      fs3.readFile(destPath, "utf8")
+    ]);
+    if (srcText === destText) {
+      if (opts.verbose) logInfo(`SKIP    ${relPath}`);
+      return destText;
+    }
+    const conflictMarker = `<<<<<<< HEAD
+${destText}
+=======
+${srcText}
+>>>>>>> template
+`;
+    return conflictMarker;
+  } catch (e) {
+    throw new Error(`Failed to merge file ${relPath}: ${e.message}`);
+  }
+}
+async function copyTemplates({
+  opts,
+  paths
+}) {
   const patterns = ["**/*"];
   const ignore = ["**/node_modules/**", "**/.git/**", "**/dist/**"];
-  const relFiles = await fg(patterns, { cwd: paths.templateRoot, dot: true, onlyFiles: true, ignore });
+  const relFiles = await fg(patterns, {
+    cwd: paths.templateRoot,
+    dot: true,
+    onlyFiles: true,
+    ignore
+  });
   const plan = [];
   for (const rel of relFiles) {
     const src = path2.join(paths.templateRoot, rel);
@@ -174,10 +227,7 @@ async function copyTemplates({ opts, paths }) {
       continue;
     }
     try {
-      const [srcBuf, destBuf] = await Promise.all([
-        fs3.readFile(src),
-        fs3.readFile(dest)
-      ]);
+      const [srcBuf, destBuf] = await Promise.all([fs3.readFile(src), fs3.readFile(dest)]);
       if (srcBuf.equals(destBuf)) {
         plan.push({ kind: "skip", src, dest, rel });
       } else {
@@ -200,15 +250,20 @@ async function copyTemplates({ opts, paths }) {
   if (opts.dryRun) {
     if (opts.verbose) {
       for (const p of plan) {
-        const label = p.kind === "create" ? "CREATE" : p.kind === "overwrite" ? "OVERWRITE" : "SKIP";
+        let label = p.kind === "create" ? "CREATE" : p.kind === "overwrite" ? "OVERWRITE" : "SKIP";
+        if (p.kind === "overwrite" && opts.merge) {
+          label = "MERGE";
+        }
         logInfo(`${label}  ${p.rel}`);
       }
     }
-    logInfo(`Plan: ${creates} create, ${overwrites} overwrite, ${skips} skip`);
+    const action = opts.merge ? "merge" : "overwrite";
+    logInfo(`Plan: ${creates} create, ${overwrites} ${action}, ${skips} skip`);
     return { ok: true, plan };
   }
   let created = 0;
   let overwritten = 0;
+  let merged = 0;
   let backedUp = 0;
   let skipped = 0;
   let hadError = false;
@@ -228,7 +283,9 @@ async function copyTemplates({ opts, paths }) {
         continue;
       }
       let decision = "overwrite";
-      if (opts.backup) {
+      if (opts.merge) {
+        decision = "merge";
+      } else if (opts.backup) {
         decision = "backup";
       } else if (opts.force || opts.yes) {
         decision = "overwrite";
@@ -236,6 +293,9 @@ async function copyTemplates({ opts, paths }) {
         decision = "overwrite";
       } else if (global === "skipAll") {
         decision = "skip";
+      } else if (global === "mergeAll") {
+        decision = "merge";
+        if (opts.verbose) logInfo(`Using mergeAll for ${step.rel}`);
       } else if (process.stdout.isTTY) {
         const choice = await promptConflict(step.rel, step.src, step.dest);
         if (choice === "overwriteAll") {
@@ -244,21 +304,41 @@ async function copyTemplates({ opts, paths }) {
         } else if (choice === "skipAll") {
           global = "skipAll";
           decision = "skip";
+        } else if (choice === "mergeAll") {
+          global = "mergeAll";
+          decision = "merge";
+          if (opts.verbose) logInfo(`MergeAll selected, will merge all remaining conflicts`);
         } else if (choice === "overwrite") {
           decision = "overwrite";
         } else if (choice === "backup") {
           decision = "backup";
+        } else if (choice === "merge") {
+          decision = "merge";
         } else {
           decision = "skip";
         }
       } else {
-        logWarn(`Conflict: ${step.rel}. Use --force or --yes to overwrite.`);
+        logWarn(`Conflict: ${step.rel}. Use --force, --yes, or --merge to resolve.`);
         return { ok: false, plan };
       }
       if (decision === "skip") {
         if (opts.verbose) logInfo(`SKIP    ${step.rel}`);
         skipped++;
         continue;
+      }
+      if (decision === "merge") {
+        try {
+          const mergedContent = await mergeFiles(step.src, step.dest, step.rel, opts);
+          await fs3.writeFile(step.dest, mergedContent, "utf8");
+          merged++;
+          if (opts.verbose) logInfo(`MERGE   ${step.rel}`);
+          continue;
+        } catch (e) {
+          logWarn(`Failed to merge ${step.rel}, skipping: ${e.message}`);
+          if (opts.verbose) logInfo(`SKIP    ${step.rel}`);
+          skipped++;
+          continue;
+        }
       }
       if (decision === "backup") {
         const backupPath = `${step.dest}.bak.${Date.now()}`;
@@ -274,7 +354,13 @@ async function copyTemplates({ opts, paths }) {
       logError(`Error processing ${step.rel}: ${e.message}`);
     }
   }
-  logSuccess(`Done: ${created} created, ${overwritten} overwritten, ${backedUp} backed up, ${skipped} skipped`);
+  const parts = [];
+  if (created > 0) parts.push(`${created} created`);
+  if (overwritten > 0) parts.push(`${overwritten} overwritten`);
+  if (merged > 0) parts.push(`${merged} merged`);
+  if (backedUp > 0) parts.push(`${backedUp} backed up`);
+  if (skipped > 0) parts.push(`${skipped} skipped`);
+  logSuccess(`Done: ${parts.join(", ")}`);
   return { ok: !hadError, plan };
 }
 
