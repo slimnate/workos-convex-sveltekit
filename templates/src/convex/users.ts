@@ -24,10 +24,10 @@ export const store = mutation({
 
 		const userData = {
 			workosUserId: args.workosUserId,
-			organizationId: args.organizationId || '',
+			organizationId: args.organizationId ?? '',
 			email: args.email,
-			firstName: args.firstName,
-			lastName: args.lastName,
+			firstName: args.firstName ?? '',
+			lastName: args.lastName ?? '',
 			profilePictureUrl: args.profilePictureUrl ?? '',
 			lastSignInAt: now,
 			updatedAt: now
