@@ -7,10 +7,9 @@ import { FunctionReference } from 'convex/server';
 import type { AuthKitAuth } from '@workos/authkit-sveltekit';
 import type { RequestEvent } from '@sveltejs/kit';
 
-
 /**
  * Custom auth handler type
- * 
+ *
  * @param T - The type of the event
  * @returns A promise that resolves to the type of the event
  */
@@ -18,43 +17,45 @@ type CustomAuthHandler<T> = (event: RequestEvent & { auth: AuthKitAuth }) => Pro
 
 /**
  * WorkOS specific configuration
- * 
+ *
  * @param clientId - WorkOS client ID
  * @param apiKey - WorkOS API key
  * @param redirectUri - WorkOS redirect URI
  * @param cookiePassword - WorkOS cookie password
  */
 type WorkOSConfig = {
-  clientId: string;
-  apiKey: string;
-  redirectUri: string;
-  cookiePassword: string;
-}
+	clientId: string;
+	apiKey: string;
+	redirectUri: string;
+	cookiePassword: string;
+	organizationId: string;
+};
 
 /**
  * Authentication configuration for WorkOS + Convex
- * 
+ *
  * @param api - API configuration for users
  * @param convexUrl - Convex URL
  * @param workos - WorkOS configuration
  */
 type AuthConfig = {
-  api: {
-    users: {
-      store: FunctionReference<"mutation">;
-      getCurrentUser: FunctionReference<"query">;
-      getUserById: FunctionReference<"query">;
-      getAllUsers: FunctionReference<"query">;
-      getUserByEmail: FunctionReference<"query">;
-    }
-  };
-  convexUrl: string;
-  workos: WorkOSConfig;
-}
+	api: {
+		users: {
+			store: FunctionReference<'mutation'>;
+			getCurrentUser: FunctionReference<'query'>;
+			getUserById: FunctionReference<'query'>;
+			getAllUsers: FunctionReference<'query'>;
+			getUserByEmail: FunctionReference<'query'>;
+		};
+	};
+	convexUrl: string;
+	workos: WorkOSConfig;
+	debug?: boolean;
+};
 
 /**
  * WorkOS user type - represents the user data from WorkOS
- * 
+ *
  * @param object - The type of the object
  * @param id - The ID of the user
  * @param email - The email of the user
@@ -69,23 +70,23 @@ type AuthConfig = {
  * @param metadata - The metadata of the user
  */
 type WorkOSUser = {
-  object: 'user';
-  id: string;
-  email: string;
-  emailVerified: boolean;
-  profilePictureUrl: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  lastSignInAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  externalId: string | null;
-  metadata: Record<string, string>;
-}
+	object: 'user';
+	id: string;
+	email: string;
+	emailVerified: boolean;
+	profilePictureUrl: string | null;
+	firstName: string | null;
+	lastName: string | null;
+	lastSignInAt: string | null;
+	createdAt: string;
+	updatedAt: string;
+	externalId: string | null;
+	metadata: Record<string, string>;
+};
 
 /**
  * Convex user type
- * 
+ *
  * @param _id - The ID of the user
  * @param _creationTime - The creation timestamp
  * @param workosUserId - The WorkOS user ID
@@ -98,30 +99,19 @@ type WorkOSUser = {
  * @param lastSignInAt - The last sign in at timestamp
  */
 type ConvexUser = {
-  _id: Id<'users'>;
-  _creationTime: number;
-  workosUserId: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  profilePictureUrl?: string;
-  createdAt: number;
-  updatedAt: number;
-  lastSignInAt: number;
-}
-
-export type {
-  WorkOSUser,
-  ConvexUser,
-  CustomAuthHandler,
-  AuthConfig,
-  WorkOSConfig,
+	_id: Id<'users'>;
+	_creationTime: number;
+	workosUserId: string;
+	email: string;
+	firstName?: string;
+	lastName?: string;
+	profilePictureUrl?: string;
+	createdAt: number;
+	updatedAt: number;
+	lastSignInAt: number;
 };
 
-
-
-
-
+export type { WorkOSUser, ConvexUser, CustomAuthHandler, AuthConfig, WorkOSConfig };
 
 // /**
 //  * User creation/update data
@@ -169,4 +159,3 @@ export type {
 //   userId: Id<'users'>;
 //   isNewUser: boolean;
 // }
-

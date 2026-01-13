@@ -27,6 +27,7 @@
   "scripts": {
     "build": "tsup",
     "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -61,7 +62,7 @@
     "fast-glob": "^3.3.2",
     "fs-extra": "^11.2.0",
     "picocolors": "^1.0.0",
-    "convex": "^1.28.0"
+    "convex": "^1.31.0"
   },
   "peerDependencies": {
     "@sveltejs/kit": "^2.48.0",

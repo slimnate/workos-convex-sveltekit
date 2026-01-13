@@ -8,6 +8,10 @@ declare global {
 		interface Locals {
 			auth: import('@workos/authkit-sveltekit').AuthKitAuth;
 		}
+		interface Error {
+			status?: number;
+			message: string;
+		}
 	}
 }
 

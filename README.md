@@ -2,6 +2,40 @@
 
 This library is designed to augment WorkOS AuthKit + Convex with built in user management functionality. It provides wrappers for some convex-svelte and @workos/authkit-sveltekit functions that keep the convex users database in sync with user data from AuthKit
 
+## Table of Contents
+
+- [Installation](#installation)
+  - [Install npm package](#install-npm-package)
+  - [Configure project](#configure-project)
+    - [Configure WorkOS account](#configure-workos-account-adapted-from-convex-docs)
+    - [Configure environment variables](#configure-environment-variables)
+  - [Copy template files](#copy-template-files)
+  - [Convex Deployment (dev)](#convex-deployment-dev)
+- [Deployment](#deployment)
+  - [Convex Deployment (prod)](#convex-deployment-prod)
+  - [Environment Variables](#environment-variables)
+  - [WorkOS Production Config](#workos-production-config)
+- [Optional Configurations](#optional-configurations)
+- [Usage](#usage)
+  - [Schema Helpers Usage](#schema-helpers-usage)
+  - [Library Exports](#library-exports)
+  - [Client Setup (+layout.svelte)](#client-setup-layoutsvelte)
+  - [Authenticating Server Routes](#authenticating-server-routes)
+  - [Auth routes provided by the template](#auth-routes-provided-by-the-template)
+  - [Using queries in pages](#using-queries-in-pages)
+    - [Role check example](#role-check-example)
+  - [Server actions](#server-actions)
+  - [Best Practices](#best-practices)
+- [CLI Options](#cli-options)
+  - [Example](#example)
+  - [Conflict Handling](#conflict-handling)
+- [Development](#development)
+  - [Project Structure](#project-structure)
+  - [Linking locally (dev workflow)](#linking-locally-dev-workflow)
+  - [Debugging](#debugging)
+  - [Planned improvements](#planned-improvements)
+- [License](#license)
+
 # Installation
 **Be sure to follow all the steps in the installation guide, see referenced documenation for more information.** The guide assumes you have a new or existing sveltekit project and that all commands are run from within that project directory.
 
@@ -27,7 +61,8 @@ Follow the steps below from the [Convex & WorkOS AuthKit](https://docs.convex.de
 - Add callback endpoint during setup: `https://<domain>/api/auth/callback`
 - Copy Client and API keys
 - Enable CORS for your domain (eg. `https://localhost:5173` for development) in the [WorkOS Dashboard](https://dashboard.workos.com/environment/authentication/sessions)
-- Set up custom JWT template. Navigate to [WorkOS Dashboard > Authentication > Sessions](https://dashboard.workos.com/environment/authentication/sessions) and add the folowing custom JWT template:
+- *[Optional]* Create a WorkOS Organization that your users will belong to. As of `v1.1.0` this package adds org based auth for authenticated routes. If you choose not to use org based authentication, leave the `WORKOS_ORGANIZATION_ID` env var unset.
+- Set up custom JWT template. Navigate to [WorkOS Dashboard > Authentication > Sessions](https://dashboard.workos.com/environment/authentication/sessions) and add the following custom JWT template:
 ```json
    {
      "aud": "<your_workos_client_id>",
@@ -53,17 +88,29 @@ WORKOS_CLIENT_ID=<client_id>
 WORKOS_API_KEY=<api_key>
 WORKOS_REDIRECT_URI=http://localhost:5173/api/auth/callback
 WORKOS_COOKIE_PASSWORD=<cookie_password>
+WORKOS_ORGANIZATION_ID=<organization_id>
 #
 # Convex (public) URL
-PUBLIC_CONVEX_URL=<public_convex_url>
+CONVEX_DEPLOYMENT=dev:convex-deployment-123
+PUBLIC_CONVEX_URL=https://convex-deployment.convex.cloud
 ```
 
-> **NOTE** To generate a secure cookie password use: `openssl rand -base64 24`
-> **NOTE** Remember to add .env.local to your .gitignore
+> **TIP** To generate a secure cookie password use: `openssl rand -base64 24`
+
+> **SECURITY** Don't commit your secrets!!! Add `.env.local` to your `.gitignore`
 
 ## Copy template files
 
-The library provides a CLI that automatically copies necessary files to your project. These files provide all the boilerplate needed for a basic Convex + WorkOS SvelteKit auth integration. If you are implementing into an existing project, you may need to manually merge the files.
+The library provides a CLI that automatically copies necessary files to your project. These files provide all the boilerplate needed for a basic Convex + WorkOS SvelteKit auth integration.
+
+The CLI tool will prompt you to overwite, merge, or skip any conflicting files:
+
+```bash
+npx workos-convex-sveltekit copy
+```
+
+<details>
+<summary>See all template files</summary>
 
 - `src/convex/auth.config.ts`: Default authentication configuration for convex. Copied directly from the Convex Documentation
 - `src/convex/users.ts` - Convex user query functions
@@ -71,32 +118,70 @@ The library provides a CLI that automatically copies necessary files to your pro
 - `src/routes/api/auth/callback/+server.ts` - Handles the auth callback 
 - `src/routes/api/auth/logout/+server.ts` - Handles logging the user out
 - `src/routes/api/auth/token/+server.ts` - Returns a JWT token for the currently authenticated user
+- `src/routes/+error.svelte` - Custom error page that displays sveltekit errors. Added to properly handle `403` org auth errors in version `1.1.0`
 - `src/routes/+layout.svelte` - Base layout file that configures auth on the client
 - `src/routes/admin/+layout.server.ts` - Example of how to use the authenticatedRoute to protect a specific route
 - `src/hooks.server.ts` - SvelteKit server hooks to handle configuring auth
 - `src/app.d.ts` -  Extended global types for SvelteKit
 - `convex.json` -  Configure the convex directory to be inside `src`
+</details>
 
-You can inspect and modify these files as needed after copying. All files preserve your existing code if conflicts are found - interactive diff and prompt are shown before any overwrite.
-
-```bash
-npx workos-convex-sveltekit copy
-```
+<br/>
 
 See [CLI Options](#cli-options) for more details about the CLI tool.
 
-## Configure convex deployment
-You'll need to create a new convex deployment and configure it. Run the `npx convex dev` command and follow the prompts to either create or use and existing project. Then follow the steps to configure the `WORKOS_CLIENT_ID` in the convex dashboard.
+## Convex Deployment (dev)
+You'll need to create a new convex deployment and configure it. Run the `npx convex dev` command and follow the prompts to either create or use an existing project. See [Convex Quickstart](https://docs.convex.dev/quickstart/svelte) and [Convex CLI docs](https://docs.convex.dev/cli) for more info on convex deployments.
 
-> On successful authentication, the library uses ConvexHttpClient and calls `api.users.store` to upsert the current user in your `users` table. Existing `roles` are preserved; new users start with `roles: []`.
+After your convex deployment is created, visit the [Convex Dashboard](https://dashboard.convex.dev/) and add the `WORKOS_CLIENT_ID` environment variable
 
-## Optional configurations
+> On successful authentication, the library uses ConvexHttpClient and calls `users:store` convex function to upsert the current user in your `users` table. Existing `roles` are preserved; new users start with `roles: []`.
+
+
+# Deployment
+
+## Convex Deployment (prod)
+To ensure that convex functions are deployed at build time, you'll need to add `npx convex codegen` to your build script:
+```json
+"scripts": {
+    ...
+    "build": "npx convex codegen && vite build",
+    ...
+}
+```
+
+Then ensure that your hosting/CI build command is set to `npx convex deploy --cmd 'npm run build'`
+
+## Environment Variables
+For production deployments, you need to configure some environment variables in convex and some in your production environment.
+
+Required env vars in Convex:
+- `WORKOS_CLIENT_ID`
+
+Required env vars for production environment:
+- `CONVEX_DEPLOY_KEY`
+- `CONVEX_DEPLOYMENT`
+- `PUBLIC_CONVEX_URL`
+- `WORKOS_API_KEY`
+- `WORKOS_CLIENT_ID`
+- `WORKOS_COOKIE_PASSWORD`
+- `WORKOS_REDIRECT_URI`
+
+It is recommended to generate a separate cookie password for production deployments.
+
+
+## WorkOS Production Config
+Make sure that WorkOS is configured to accept CORS from your production domain: [Authentication > Sessions](https://dashboard.workos.com/authentication) > Cross-Origin Resource Sharing (CORS)
+
+Ensure that your production callback url (eg. `https://<yourdomain>/api/auth/callback`) is configured under [Redirects](https://dashboard.workos.com/redirects)
+
+## Optional Configurations
 TODO: This section will outline some additional configurations that can be made in the WorkOS UI, and how to integrate them with this library.
 
 # Usage
 Once you have all the [Configuration](#configure-project) steps completed, you're ready to start using the library.
 
-## Schema helpers usage
+## Schema Helpers Usage
 ```ts
 // src/convex/schema.ts
 import { defineSchema } from 'convex/server';
@@ -115,7 +200,7 @@ Notes:
 - The helpers already apply indexes `by_email` and `by_workos_user_id`.
 - No generics are required.
 
-## Library exports
+## Library Exports
 ```ts
 // Server utilities
 import {
@@ -133,7 +218,7 @@ import { configureClientAuth } from 'workos-convex-sveltekit';
 import { defaultUsers, extendUsers } from 'workos-convex-sveltekit/schema';
 ```
 
-## Client setup (+layout.svelte)
+## Client Setup (+layout.svelte)
 ```svelte
 <script lang="ts">
   import { browser } from '$app/environment';
@@ -148,7 +233,7 @@ import { defaultUsers, extendUsers } from 'workos-convex-sveltekit/schema';
 {@render children?.()}
 ```
 
-## Authenticating server routes
+## Authenticating Server Routes
 You can authenticate a server route using the `authenticatedRequest` function in any `+layout.server.ts` file:
 
 ```ts
@@ -171,16 +256,6 @@ export const load: LayoutServerLoad = authenticatedRequest(authKit, async ({ aut
 - `GET /api/auth/callback` (WorkOS callback)
 - `GET /api/auth/token` (returns JWT via `handleToken`)
 - `GET /api/auth/logout` (signs out via `handleSignOut`)
-- `GET /api/auth/signin` (optional; via `handleSignIn`)
-
-### Optional: Sign‑in route
-```ts
-// src/routes/api/auth/signin/+server.ts
-import { authKit } from '@workos/authkit-sveltekit';
-import { handleSignIn } from 'workos-convex-sveltekit';
-
-export const GET = handleSignIn(authKit);
-```
 
 ## Using queries in pages
 In any `+page.svelte`, you can access the `useQuery()` or `convex.mutation()` functions in your svelte app. The template provides user queries in `src/convex/users.ts`:
@@ -273,9 +348,6 @@ export const actions = {
 These are some best practices that I have come up with
 - Authorization inside your convex query/mutation functions. Limit client side trust as much as possible.
 
-# Deployment
-When deploying besure to include all the WorkOS environment variables for the build.
-
 # CLI Options
 The `workos-convex-sveltekit` CLI provides several options to control how files are copied and how conflicts are handled. These can be combined as needed.
 | Option               | Alias   | Description                                                                                  | Default                   |
@@ -285,6 +357,7 @@ The `workos-convex-sveltekit` CLI provides several options to control how files 
 | `--yes`              | `-y`    | Assume "yes" to all prompts (non-interactive). Combine with CI use                           | `false`                   |
 | `--dry-run`          |         | Show planned actions (which files would be created, overwritten, or skipped), but make no changes | `false`                   |
 | `--backup`           |         | When overwriting, create backups of existing files                                           | `false`                   |
+| `--merge`            |         | Merge changes with Git-style conflict markers (for code files)                              | `false`                   |
 | `--verbose`          | `-v`    | Print verbose output, including individual file actions                                      | `false`                   |
 | `--help`             | `-h`    | Show usage help                                                                              |                           |
 | `--version`          | `-V`    | Show CLI version                                                                             |                           |
@@ -296,9 +369,15 @@ npx workos-convex-sveltekit copy --dry-run --verbose
 npx workos-convex-sveltekit copy --dest . --dry-run --verbose
 ```
 - This will show a summary of all file actions that would be taken, writing nothing.
+
+```bash
+# Merge conflicting files with Git-style conflict markers
+npx workos-convex-sveltekit copy --merge
+```
+- This will merge conflicting code files using conflict markers, allowing you to manually resolve differences.
 ### Conflict Handling
-- By default, if a destination file already exists and contents differ, you'll be shown a colorized diff and prompted for action (`overwrite`, `skip`, `backup`, `overwrite all`, `skip all`).
-- To automate in CI or non-interactive use, use `--force` or `--yes` to skip prompts and automatically overwrite conflicting files.
+- By default, if a destination file already exists and contents differ, you'll be shown a colorized diff and prompted for action (`overwrite`, `skip`, `backup`, `merge`, `overwrite all`, `skip all`, `merge all`).
+- The `merge` option uses Git-style conflict markers (`<<<<<<< HEAD`, `=======`, `>>>>>>> template`) to combine existing and template content, allowing manual resolution. Merge works for code files (`.js`, `.ts`, `.jsx`, `.tsx`, `.svelte`, `.vue`, `.css`, `.scss`, `.html`, `.json`).
 - Use `--backup` to always back up existing files before overwriting.
 
 See the output of:
@@ -309,30 +388,47 @@ for a full list of options.
 
 # Development
 
-#### Planned improvements:
- - [ ] Look more into how profile images are handled and how we might allow users to change them and not have them re-written by workos syncing. Or maybe they can be updated through workos directly?
- - [ ] Figure out how to get the users queries exported with proper typescript support, to avoid copying them all directly from the template. This will help with handling udpates where changes may be needed to the fucntionality of users queries.
- - [ ] Add support for organizations, and role based authorization
- - [ ] 
-
 ## Project Structure
-
 ```
 workos-convex-sveltekit/
 ├── src/
 │   ├── index.ts            # Main library exports
 │   ├── schema.ts           # Schema helpers (exported as subpath)
+│   ├── users.ts            # User management utilities
 │   ├── cli.ts              # CLI tool (exported as command)
-│   └── cli/                # CLI implementation
-│       ├── args.ts
-│       ├── copy.ts
-│       ├── log.ts
-│       ├── paths.ts
-│       └── prompts.ts
+│   ├── cli/                # CLI implementation
+│   │   ├── args.ts
+│   │   ├── copy.ts
+│   │   ├── log.ts
+│   │   ├── paths.ts
+│   │   └── prompts.ts
+│   └── types/              # TypeScript type definitions
+│       └── index.ts
 ├── templates/              # Files copied into consuming app
-│   └── src/...
-├── dist/                   # Build output
-└── package.json
+│   ├── convex.json         # Convex configuration
+│   └── src/
+│       ├── app.d.ts        # Extended global types for SvelteKit
+│       ├── hooks.server.ts # SvelteKit server hooks
+│       ├── convex/
+│       │   ├── auth.config.ts
+│       │   ├── schema.ts
+│       │   └── users.ts
+│       └── routes/
+│           ├── +error.svelte
+│           ├── +layout.svelte
+│           ├── admin/
+│           │   └── +layout.server.ts
+│           └── api/
+│               └── auth/
+│                   ├── callback/
+│                   │   └── +server.ts
+│                   ├── logout/
+│                   │   └── +server.ts
+│                   └── token/
+│                       └── +server.ts
+├── package.json
+├── tsconfig.json
+└── tsup.config.ts
 ```
 
 ```bash
@@ -353,6 +449,15 @@ npm run build && npm link
 npm link --save workos-convex-sveltekit
 workos-convex-sveltekit copy --dry-run --verbose
 ```
+
+## Debugging
+To show debug messages set environment variable: `WORKOS_CONVEX_SVELTEKIT_DEBUG=true`
+
+#### Planned improvements:
+ - [ ] Look more into how profile images are handled and how we might allow users to change them and not have them re-written by workos syncing. Or maybe they can be updated through workos directly?
+ - [x] Figure out how to get the users queries exported with proper typescript support, to avoid copying them all directly from the template. This will help with handling udpates where changes may be needed to the functionality of users queries.
+ - [x] Add support for organizations, and role based authorization
+ - [ ] 
 
 ## License
 
