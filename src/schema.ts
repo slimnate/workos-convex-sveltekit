@@ -13,7 +13,7 @@ function extendUsers(v: typeof ConvexValues, additionalFields: Record<string, an
 		firstName: v.optional(v.string()),
 		lastName: v.optional(v.string()),
 		workosUserId: v.string(), // The WorkOS user ID (from identity.subject)
-		organization: v.optional(v.string()),
+		organizationId: v.optional(v.string()),
 		roles: v.optional(v.array(v.string())), // Application roles (e.g., ["admin", "bookings"])
 		createdAt: v.number(),
 		updatedAt: v.number(),

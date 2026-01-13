@@ -8,10 +8,11 @@ import { mutation, query } from './_generated/server';
 export const store = mutation({
 	args: {
 		workosUserId: v.string(),
+		organizationId: v.string(),
 		email: v.string(),
-		firstName: v.string(),
-		lastName: v.string(),
-		profilePictureUrl: v.string()
+		firstName: v.optional(v.string()),
+		lastName: v.optional(v.string()),
+		profilePictureUrl: v.optional(v.nullable(v.string()))
 	},
 	handler: async (ctx, args) => {
 		const existingUser = await ctx.db
@@ -22,11 +23,12 @@ export const store = mutation({
 		const now = Date.now();
 
 		const userData = {
+			workosUserId: args.workosUserId,
+			organizationId: args.organizationId,
 			email: args.email,
 			firstName: args.firstName,
 			lastName: args.lastName,
-			workosUserId: args.workosUserId,
-			profilePictureUrl: args.profilePictureUrl,
+			profilePictureUrl: args.profilePictureUrl ?? '',
 			lastSignInAt: now,
 			updatedAt: now
 		};

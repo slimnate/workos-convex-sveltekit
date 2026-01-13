@@ -5,8 +5,9 @@ import {
 	configureAuthKit as ConfigureAuthKit
 } from '@workos/authkit-sveltekit';
 
-import { redirect, json } from '@sveltejs/kit';
+import { redirect, json, error } from '@sveltejs/kit';
 import { ConvexHttpClient } from 'convex/browser';
+import { env } from 'process';
 
 // Globally scoped auth configuration
 let authConfig: AuthConfig | undefined;
@@ -19,13 +20,23 @@ function authenticatedRequest<T>(authKitInstance: typeof AuthKit, handler: Custo
 		debug('authenticatedRequest', 'called');
 		const accessToken = event.auth.accessToken;
 		const user = event.auth.user;
+		const organizationId = event.auth.organizationId;
+
+		if (!authConfig) {
+			throw new Error('Auth not configured. Please call configureAuth first.');
+		}
 
 		if (!user) {
 			throw redirect(302, 'api/auth/login');
 		}
 
-		if (!authConfig) {
-			throw new Error('Auth not configured. Please call configureAuth first.');
+		debug(
+			'authenticatedRequest',
+			`organizationId=${organizationId} authConfig.workos.organizationId=${authConfig.workos.organizationId}`
+		);
+
+		if (organizationId != authConfig.workos.organizationId) {
+			throw error(403, 'You do not have access to this organization');
 		}
 
 		// Sync user data to Convex on login
@@ -36,6 +47,7 @@ function authenticatedRequest<T>(authKitInstance: typeof AuthKit, handler: Custo
 			try {
 				await convexClient.mutation(authConfig.api.users.store, {
 					workosUserId: user.id,
+					organizationId: organizationId,
 					email: user.email,
 					firstName: user.firstName,
 					lastName: user.lastName,
@@ -65,6 +77,9 @@ function configureServerAuth(config: AuthConfig, configureAuthKit: typeof Config
 	}
 	if (!authConfig.api.users) {
 		throw new Error('Users API not found');
+	}
+	if (env.WORKOS_AUTHKIT_SVELTEKIT_DEBUG) {
+		authConfig.debug = true;
 	}
 
 	configureAuthKit({
@@ -179,7 +194,9 @@ function handleSignIn(authKitInstance: typeof AuthKit, defaultReturnTo: string =
  * @param message The message to log.
  */
 function debug(func: string, message: string) {
-	console.log(`[DEBUG] ${func}: ${message}`);
+	if (authConfig?.debug) {
+		console.log(`[DEBUG|workos-convex-sveltekit] ${func}: ${message}`);
+	}
 }
 
 export {
