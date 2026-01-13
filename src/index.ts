@@ -7,7 +7,7 @@ import {
 
 import { redirect, json, error } from '@sveltejs/kit';
 import { ConvexHttpClient } from 'convex/browser';
-import { env } from 'process';
+import process from 'process';
 
 // Globally scoped auth configuration
 let authConfig: AuthConfig | undefined;
@@ -21,6 +21,7 @@ function authenticatedRequest<T>(authKitInstance: typeof AuthKit, handler: Custo
 		const accessToken = event.auth.accessToken;
 		const user = event.auth.user;
 		const organizationId = event.auth.organizationId;
+		const expectedOrganizationId = authConfig.workos.organizationId;
 
 		if (!authConfig) {
 			throw new Error('Auth not configured. Please call configureAuth first.');
@@ -35,7 +36,7 @@ function authenticatedRequest<T>(authKitInstance: typeof AuthKit, handler: Custo
 			`organizationId=${organizationId} authConfig.workos.organizationId=${authConfig.workos.organizationId}`
 		);
 
-		if (organizationId != authConfig.workos.organizationId) {
+		if (expectedOrganizationId && organizationId !== expectedOrganizationId) {
 			throw error(403, 'You do not have access to this organization');
 		}
 
@@ -78,7 +79,7 @@ function configureServerAuth(config: AuthConfig, configureAuthKit: typeof Config
 	if (!authConfig.api.users) {
 		throw new Error('Users API not found');
 	}
-	if (env.WORKOS_AUTHKIT_SVELTEKIT_DEBUG) {
+	if (process.env.WORKOS_CONVEX_SVELTEKIT_DEBUG) {
 		authConfig.debug = true;
 	}
 

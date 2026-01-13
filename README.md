@@ -97,7 +97,7 @@ PUBLIC_CONVEX_URL=https://convex-deployment.convex.cloud
 
 > **TIP** To generate a secure cookie password use: `openssl rand -base64 24`
 
-> **SECURITY** Dont' commit your secrets!!! Add `.env.local` to your `.gitignore`
+> **SECURITY** Don't commit your secrets!!! Add `.env.local` to your `.gitignore`
 
 ## Copy template files
 

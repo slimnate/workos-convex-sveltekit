@@ -1,4 +1,5 @@
 // Note from WorkOS: For simpler setups where you're using process.env, you can skip the configureAuthKit call and the SDK will automatically read from process.env.
+import { HandleServerError } from '@sveltejs/kit';
 
 import { env } from '$env/dynamic/private';
 import { configureAuthKit, authKitHandle } from '@workos/authkit-sveltekit';
