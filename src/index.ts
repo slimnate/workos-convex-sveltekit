@@ -18,14 +18,15 @@ let authConfig: AuthConfig | undefined;
 function authenticatedRequest<T>(authKitInstance: typeof AuthKit, handler: CustomAuthHandler<T>) {
 	return authKitInstance.withAuth(async (event) => {
 		debug('authenticatedRequest', 'called');
-		const accessToken = event.auth.accessToken;
-		const user = event.auth.user;
-		const organizationId = event.auth.organizationId;
-		const expectedOrganizationId = authConfig.workos.organizationId;
 
 		if (!authConfig) {
 			throw new Error('Auth not configured. Please call configureAuth first.');
 		}
+
+		const accessToken = event.auth.accessToken;
+		const user = event.auth.user;
+		const organizationId = event.auth.organizationId;
+		const expectedOrganizationId = authConfig.workos.organizationId;
 
 		if (!user) {
 			throw redirect(302, 'api/auth/login');
