@@ -2,7 +2,7 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 
-	const errorStatus = page.error?.status;
+	const errorStatus = page.error?.status || page.status;
 	const errorMessage = page.error?.message;
 </script>
 
@@ -16,7 +16,7 @@
 				{errorMessage || 'An error occurred'}
 			</p>
 			<div class="card-actions justify-center">
-				<button on:click={() => goto('/api/auth/logout')} class="btn btn-primary"> Go Home </button>
+				<button on:click={() => goto('/api/auth/logout')} class="btn btn-primary">Log Out</button>
 			</div>
 		</div>
 	</div>
